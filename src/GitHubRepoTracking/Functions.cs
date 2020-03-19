@@ -16,7 +16,7 @@ namespace GitHubRepoTracking
     public static class Functions
     {
         [FunctionName("TrackReposTimer")]
-        public static async void TrackReposTimer([TimerTrigger("0 0 * * *")]TimerInfo myTimer, ILogger log, ExecutionContext context)
+        public static async void TrackReposTimer([TimerTrigger("0 0 0 * * *")]TimerInfo myTimer, ILogger log, ExecutionContext context)
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
             await TrackRepos.Run(log, context);

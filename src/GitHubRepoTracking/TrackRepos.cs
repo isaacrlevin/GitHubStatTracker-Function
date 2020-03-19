@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
@@ -13,19 +17,20 @@ namespace GitHubRepoTracking
 {
     public static class TrackRepos
     {
-        public static async Task Run(ILogger log, ExecutionContext context)
+        public static async Task Run(ILogger log, Microsoft.Azure.WebJobs.ExecutionContext context)
         {
-
-
             var client = new GitHubClient(new ProductHeaderValue("TrackRepos"));
 
-            var basicAuth = new Credentials(Environment.GetEnvironmentVariable("GitHubToken")); // NOTE: not real credentials
+            var basicAuth = new Credentials(Environment.GetEnvironmentVariable("GitHubToken"));
             client.Credentials = basicAuth;
 
-            var path = System.IO.Path.Combine(context.FunctionDirectory, "../Repos.json");
+            string storageConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+            BlobServiceClient blobServiceClient = new BlobServiceClient(storageConnectionString);
+            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("repos");
+            BlobClient blobClient = containerClient.GetBlobClient("Repos.json");
+            BlobDownloadInfo download = await blobClient.DownloadAsync();
 
-            List<Campaign> campaigns = JsonConvert.DeserializeObject<List<Campaign>>(File.ReadAllText(path));
-
+            List<Campaign> campaigns = JsonConvert.DeserializeObject<List<Campaign>>(new StreamReader(download.Content).ReadToEnd());
 
             List<RepoStats> views = new List<RepoStats>();
 
@@ -51,6 +56,7 @@ namespace GitHubRepoTracking
                                 };
                                 views.Add(stat);
                             }
+                            Thread.Sleep(3000);
                         }
                     }
             }
