@@ -23,5 +23,7 @@ namespace GitHubRepoTracking
         public string Date { get; set; }
         public int Views { get; set; }
         public int UniqueUsers { get; set; }
+        public int Clones { get; set; }
+        public int UniqueClones { get; set; }
     }
 }

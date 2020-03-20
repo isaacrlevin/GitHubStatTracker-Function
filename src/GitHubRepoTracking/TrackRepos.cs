@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Octokit;
@@ -32,7 +34,7 @@ namespace GitHubRepoTracking
 
             List<Campaign> campaigns = JsonConvert.DeserializeObject<List<Campaign>>(new StreamReader(download.Content).ReadToEnd());
 
-            List<RepoStats> views = new List<RepoStats>();
+            List<RepoStats> stats = new List<RepoStats>();
 
             foreach (Campaign campaign in campaigns)
             {
@@ -41,9 +43,10 @@ namespace GitHubRepoTracking
                     {
                         if (!string.IsNullOrEmpty(repo.RepoName))
                         {
-                            var data = await client.Repository.Traffic.GetViews(campaign.OrgName, repo.RepoName, new RepositoryTrafficRequest(TrafficDayOrWeek.Day));
-                            foreach (var item in data.Views)
-                            {
+                            var views = await client.Repository.Traffic.GetViews(campaign.OrgName, repo.RepoName, new RepositoryTrafficRequest(TrafficDayOrWeek.Day));
+                            var clones = await client.Repository.Traffic.GetClones(campaign.OrgName, repo.RepoName, new RepositoryTrafficRequest(TrafficDayOrWeek.Day));
+                            foreach (var item in views.Views)
+                            {                                
                                 var stat = new RepoStats($"{campaign.CampaignName}{repo.RepoName}", item.Timestamp.UtcDateTime.ToShortDateString().Replace("/", ""))
                                 {
                                     OrgName = campaign.OrgName,
@@ -52,11 +55,18 @@ namespace GitHubRepoTracking
                                     Date = item.Timestamp.UtcDateTime.ToShortDateString(),
                                     Views = item.Count,
                                     UniqueUsers = item.Uniques
-
                                 };
-                                views.Add(stat);
+
+                                var clone = clones.Clones.Where(a => a.Timestamp.UtcDateTime.ToShortDateString() == item.Timestamp.UtcDateTime.ToShortDateString()).FirstOrDefault();
+
+                                if (clone != null)
+                                {
+                                    stat.Clones = clone.Count;
+                                    stat.UniqueClones = clone.Uniques;
+                                }
+                                stats.Add(stat);
                             }
-                            Thread.Sleep(3000);
+                            Thread.Sleep(5000);
                         }
                     }
             }
@@ -64,7 +74,7 @@ namespace GitHubRepoTracking
             string tableName = "RepoStats";
             CloudTable table = await TableStorageHelper.CreateTableAsync(tableName);
 
-            foreach (var view in views)
+            foreach (var view in stats)
             {
                 Console.WriteLine("Insert an Entity.");
                 await TableStorageHelper.InsertOrMergeEntityAsync(table, view);
