@@ -20,6 +20,20 @@
             "metadata": {
                 "description": "Developer Token to Read GitHub Traffic (need push permissions on Repo)"
             }
+        },
+        "repoURL": {
+            "type": "string",
+            "defaultValue": "https://github.com/Azure-Samples/app-service-web-html-get-started.git",
+            "metadata": {
+                "description": "The URL for the GitHub repository that contains the project to deploy."
+            }
+        },
+        "branch": {
+            "type": "string",
+            "defaultValue": "master",
+            "metadata": {
+                "description": "The branch of the GitHub repository to use."
+            }
         }
     },
     "variables": {
@@ -75,13 +89,29 @@
             }
         },
         {
-            "apiVersion": "2015-08-01",
+            "apiVersion": "2018-02-01",
             "type": "Microsoft.Web/sites",
             "name": "[variables('functionAppName')]",
             "location": "[resourceGroup().location]",
             "kind": "functionapp",
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+            ],
+            "resources": [
+                {
+                    "type": "sourcecontrols",
+                    "apiVersion": "2015-08-01",
+                    "name": "web",
+                    "properties": {
+                        "RepoUrl": "[parameters('repoURL')]",
+                        "branch": "[parameters('branch')]",
+                        "IsManualIntegration": "true"
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites/', variables('functionAppName'))]",
+                        "[resourceId('Microsoft.Web/Sites/config', variables('functionAppName'), 'appsettings')]"
+                    ]
+                }
             ],
             "properties": {
                 "siteConfig": {
