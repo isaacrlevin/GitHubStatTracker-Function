@@ -89,29 +89,13 @@
             }
         },
         {
-            "apiVersion": "2018-02-01",
+            "apiVersion": "2018-11-01",
             "type": "Microsoft.Web/sites",
             "name": "[variables('functionAppName')]",
             "location": "[resourceGroup().location]",
             "kind": "functionapp",
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-            ],
-            "resources": [
-                {
-                    "type": "sourcecontrols",
-                    "apiVersion": "2015-08-01",
-                    "name": "web",
-                    "properties": {
-                        "RepoUrl": "[parameters('repoURL')]",
-                        "branch": "[parameters('branch')]",
-                        "IsManualIntegration": "true"
-                    },
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites/', variables('functionAppName'))]",
-                        "[resourceId('Microsoft.Web/Sites/config', variables('functionAppName'), 'appsettings')]"
-                    ]
-                }
             ],
             "properties": {
                 "siteConfig": {
@@ -154,7 +138,22 @@
                         }
                     ]
                 }
-            }
+            },
+            "resources": [
+                {
+                    "type": "sourcecontrols",
+                    "apiVersion": "2018-11-01",
+                    "name": "web",
+                    "properties": {
+                        "RepoUrl": "[parameters('repoURL')]",
+                        "branch": "[parameters('branch')]",
+                        "IsManualIntegration": true
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites/', variables('functionAppName'))]"
+                    ]
+                }
+            ]
         }
     ]
 }
