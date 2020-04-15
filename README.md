@@ -20,7 +20,7 @@ Next thing to do is create the infrastructure in Azure, which is as follows
 
 This will direct you to the Template creation screen in Azure, enter in the required info, as well as the GitHub Token you obtained earlier.
 
-Once the template deployment is created, the infrastructure is deployed, as well as the code from this repo, so you are good to go!
+Once the template deployment is created, the infrastructure is deployed. Next step would be cloning the code and publishing to Azure from Visual Studio or Visual Studio Code. After that, you are good to go!
 
 ## Configure your Repos
 
