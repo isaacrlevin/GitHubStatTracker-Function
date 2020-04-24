@@ -3,7 +3,6 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "storageAccountType": {
-            "type": "string",
             "defaultValue": "Standard_LRS",
             "allowedValues": [
                 "Standard_LRS",
@@ -11,26 +10,27 @@
                 "Standard_ZRS",
                 "Premium_LRS"
             ],
+            "type": "String",
             "metadata": {
                 "description": "Storage Account type"
             }
         },
         "gitHubToken": {
-            "type": "string",
+            "type": "String",
             "metadata": {
                 "description": "Developer Token to Read GitHub Traffic (need push permissions on Repo)"
             }
         },
         "repoURL": {
-            "type": "string",
             "defaultValue": "https://github.com/isaacrlevin/GitHubStatTracker",
+            "type": "String",
             "metadata": {
                 "description": "The URL for the GitHub repository that contains the project to deploy."
             }
         },
         "branch": {
-            "type": "string",
             "defaultValue": "master",
+            "type": "String",
             "metadata": {
                 "description": "The branch of the GitHub repository to use."
             }
@@ -46,14 +46,14 @@
     },
     "resources": [
         {
+            "type": "Microsoft.Insights/components",
             "apiVersion": "2015-05-01",
             "name": "[variables('appInsightsName')]",
-            "type": "Microsoft.Insights/components",
-            "kind": "web",
             "location": "[resourceGroup().location]",
             "tags": {
                 "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('functionAppName'))]": "Resource"
             },
+            "kind": "web",
             "properties": {
                 "Application_Type": "web",
                 "ApplicationId": "[variables('appInsightsName')]"
@@ -68,58 +68,56 @@
                 "name": "[parameters('storageAccountType')]"
             },
             "kind": "StorageV2",
-            "properties": {
-            }
+            "properties": {}
         },
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2016-09-01",
             "name": "[variables('hostingPlanName')]",
             "location": "[resourceGroup().location]",
-            "properties": {
-                "name": "[variables('hostingPlanName')]",
-                "computeMode": "Dynamic"
-            },
             "sku": {
                 "name": "Y1",
                 "tier": "Dynamic",
                 "size": "Y1",
                 "family": "Y",
                 "capacity": 0
+            },
+            "properties": {
+                "name": "[variables('hostingPlanName')]",
+                "computeMode": "Dynamic"
             }
         },
         {
+            "type": "Microsoft.Web/sites",
             "apiVersion": "2015-08-01",
             "name": "[variables('functionAppName')]",
-            "type": "Microsoft.Web/sites",
-            "kind": "functionapp",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
                 "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
             ],
+            "kind": "functionapp",
             "properties": {
                 "serverFarmId": "[variables('hostingPlanName')]",
-                "siteConfig": {
-                    "appSettings": [
-                        {
-                            "name": "FUNCTIONS_EXTENSION_VERSION",
-                            "value": "~2"
-                        },
-                        {
-                            "name": "Project",
-                            "value": "src/GitHubRepoTracking/GitHubRepoTracking.csproj"
-                        }
-                    ]
-                }
+                "appSettings": [
+                    {
+                        "name": "FUNCTIONS_EXTENSION_VERSION",
+                        "value": "~2"
+                    },
+                    {
+                        "name": "Project",
+                        "value": "src/GitHubRepoTracking/GitHubRepoTracking.csproj"
+                    }
+                ]
             },
             "resources": [
                 {
+                    "type": "config",
                     "apiVersion": "2015-08-01",
                     "name": "appsettings",
-                    "type": "config",
                     "dependsOn": [
                         "[resourceId('Microsoft.Web/Sites', variables('functionAppName'))]",
+                        "[resourceId('Microsoft.Web/Sites/sourcecontrols', variables('functionAppName'), 'web')]",
                         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
                     ],
                     "properties": {
@@ -130,7 +128,20 @@
                         "GitHubToken": "[variables('gitHubToken')]",
                         "Project": "src/GitHubRepoTracking/GitHubRepoTracking.csproj"
                     }
-                }               
+                },
+                {
+                    "type": "sourcecontrols",
+                    "apiVersion": "2015-08-01",
+                    "name": "web",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites/', variables('functionAppName'))]"
+                    ],
+                    "properties": {
+                        "RepoUrl": "[parameters('repoURL')]",
+                        "branch": "[parameters('branch')]",
+                        "IsManualIntegration": true
+                    }
+                }
             ]
         }
     ]
