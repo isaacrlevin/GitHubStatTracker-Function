@@ -92,24 +92,27 @@
             "apiVersion": "2015-08-01",
             "name": "[variables('functionAppName')]",
             "location": "[resourceGroup().location]",
+			"properties": {
+                "serverFarmId": "[variables('hostingPlanName')]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~2"
+                        },
+                        {
+                            "name": "Project",
+                            "value": "src/GitHubRepoTracking/GitHubRepoTracking.csproj"
+                        }
+                    ]
+                }
+            },
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
                 "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
             ],
             "kind": "functionapp",
-            "properties": {
-                "serverFarmId": "[variables('hostingPlanName')]",
-                "appSettings": [
-                    {
-                        "name": "FUNCTIONS_EXTENSION_VERSION",
-                        "value": "~2"
-                    },
-                    {
-                        "name": "Project",
-                        "value": "src/GitHubRepoTracking/GitHubRepoTracking.csproj"
-                    }
-                ]
-            },
+            
             "resources": [
                 {
                     "type": "config",
