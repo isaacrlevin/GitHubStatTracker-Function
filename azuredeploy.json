@@ -114,7 +114,6 @@
           "type": "config",
           "dependsOn": [
             "[resourceId('Microsoft.Web/Sites', parameters('functionAppName'))]",
-           // "[resourceId('Microsoft.Web/Sites/sourcecontrols', parameters('functionAppName'), 'web')]",
             "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
           ],
           "properties": {
