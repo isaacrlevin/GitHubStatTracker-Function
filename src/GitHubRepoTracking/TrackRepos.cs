@@ -13,6 +13,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Octokit;
 
 namespace GitHubRepoTracking
@@ -46,7 +47,7 @@ namespace GitHubRepoTracking
                             var views = await client.Repository.Traffic.GetViews(campaign.OrgName, repo.RepoName, new RepositoryTrafficRequest(TrafficDayOrWeek.Day));
                             var clones = await client.Repository.Traffic.GetClones(campaign.OrgName, repo.RepoName, new RepositoryTrafficRequest(TrafficDayOrWeek.Day));
                             foreach (var item in views.Views)
-                            {                                
+                            {
                                 var stat = new RepoStats($"{campaign.CampaignName}{repo.RepoName}", item.Timestamp.UtcDateTime.ToShortDateString().Replace("/", ""))
                                 {
                                     OrgName = campaign.OrgName,
@@ -76,7 +77,10 @@ namespace GitHubRepoTracking
 
             foreach (var view in stats)
             {
-                Console.WriteLine("Insert an Entity.");
+                var jsonString = JsonConvert.SerializeObject(view, 
+                    Formatting.Indented, 
+                    new JsonConverter[] { new StringEnumConverter() });
+              log.LogInformation($"Inserted: {jsonString}");
                 await TableStorageHelper.InsertOrMergeEntityAsync(table, view);
             }
         }
