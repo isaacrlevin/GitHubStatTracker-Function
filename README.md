@@ -1,3 +1,5 @@
+# Beginning Repo that eventually became [GitHubStatTracker](https://github.com/isaacrlevin/GitHubStatTracker)
+
 # GitHub Stat Tracker
 
 Have you ever wanted to see GitHub Traffic data for more than 2 weeks? This tool is an Azure Function that "polls" GitHub Traffic data everyday and tracks Views and Clones, which GitHub Insights does not keep after 2 weeks. For more info, check out my [blog post](https://www.isaaclevin.com/post/github-stats-tracking) on it
